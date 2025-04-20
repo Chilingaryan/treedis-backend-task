@@ -4,8 +4,8 @@ import path from "path";
 import Busboy from "busboy";
 import { v4 as uuidv4 } from "uuid";
 
+import { Req } from "@/core/types";
 import { httpError } from "@/core/utils";
-import { HttpError, Req } from "@/core/types";
 import { S3Service as s3 } from "@/services/s3.service";
 import { hasFile, isAllowedMimeType, saveToTemp } from "./media.utils";
 

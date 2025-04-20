@@ -2,10 +2,10 @@ import { parse } from "url";
 import Stream from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 
-import { httpError, send, stringify } from "@/core/utils";
+import { send, stringify } from "@/core/utils";
+import { Controller } from "@/core/controller";
+import { Logger } from "@/services/logger.service";
 import { ControllerInstance, HttpError, Route } from "@/core/types";
-import { Logger } from "./services/logger.service";
-import { Controller } from "./core/controller";
 
 export class Router {
   // private apiPrefix = "";
@@ -49,11 +49,11 @@ export class Router {
 
         if (data instanceof Stream) {
           data.pipe(res);
-          Logger.success(req.url!);
         } else {
           send(res, 200, data);
-          Logger.success(req.url!);
         }
+
+        Logger.success(req.url!);
       } catch (e: unknown) {
         const httpError = e as HttpError;
         const basicError = e as ErrorEvent;
