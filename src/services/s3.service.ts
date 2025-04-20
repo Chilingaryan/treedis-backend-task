@@ -1,0 +1,80 @@
+import { Readable } from "stream";
+import {
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  S3ServiceException,
+} from "@aws-sdk/client-s3";
+
+import { s3 } from "@/config/aws.config";
+import { httpError } from "@/core/utils";
+
+const Bucket = process.env.AWS_S3_BUCKET;
+
+const s3ErrorMessages = {
+  NoSuchKey: "File not found",
+  NoSuchBucket: "Bucket doesn’t exist",
+  AccessDenied: "Access denied",
+  InvalidObjectState: "Invalid file",
+};
+
+export class S3Service {
+  static async upload(
+    key: string,
+    body: Buffer | Readable,
+    contentType: string,
+    contentLength: number
+  ) {
+    try {
+      const command = new PutObjectCommand({
+        Bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+        ContentLength: contentLength,
+      });
+
+      await s3.send(command);
+      return { success: true };
+    } catch (err) {
+      throw httpError(err);
+    }
+  }
+
+  static async get(key: string) {
+    try {
+      const command = new GetObjectCommand({ Bucket, Key: key });
+      const response = await s3.send(command);
+      return response.Body as Readable;
+    } catch (err) {
+      const error = err as S3ServiceException;
+      const name = error.name as keyof typeof s3ErrorMessages;
+
+      if (name in s3ErrorMessages) {
+        throw httpError(s3ErrorMessages[name], 404);
+      }
+
+      throw httpError(err);
+    }
+  }
+
+  static async delete(key: string) {
+    try {
+      const command = new DeleteObjectCommand({ Bucket, Key: key });
+      await s3.send(command);
+      return { success: true };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  static async getMetadata(key: string) {
+    try {
+      const command = new HeadObjectCommand({ Bucket, Key: key });
+      return await s3.send(command);
+    } catch (e) {
+      throw httpError("No metadata found", 404);
+    }
+  }
+}
