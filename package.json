@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "main": "server.ts",
   "type": "module",
+  "engineStrict": true,
+  "engines": {
+    "node": "^20.18.1"
+  },
   "scripts": {
     "dev": "tsx watch ./src/server.ts",
     "start": "tsx ./src/server.ts"

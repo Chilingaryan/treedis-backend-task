@@ -9,6 +9,7 @@ import {
 
 import { s3 } from "@/config/aws.config";
 import { httpError } from "@/core/utils";
+import { IFileStorageService } from "./file-storage.interface";
 
 const Bucket = process.env.AWS_S3_BUCKET;
 
@@ -18,9 +19,8 @@ const s3ErrorMessages = {
   AccessDenied: "Access denied",
   InvalidObjectState: "Invalid file",
 };
-
-export class S3Service {
-  static async upload(
+export class S3Service implements IFileStorageService {
+  async upload(
     key: string,
     body: Buffer | Readable,
     contentType: string,
@@ -42,7 +42,7 @@ export class S3Service {
     }
   }
 
-  static async get(key: string) {
+  async get(key: string) {
     try {
       const command = new GetObjectCommand({ Bucket, Key: key });
       const response = await s3.send(command);
@@ -59,7 +59,7 @@ export class S3Service {
     }
   }
 
-  static async delete(key: string) {
+  async delete(key: string) {
     try {
       const command = new DeleteObjectCommand({ Bucket, Key: key });
       await s3.send(command);
@@ -69,7 +69,7 @@ export class S3Service {
     }
   }
 
-  static async getMetadata(key: string) {
+  async getMetadata(key: string) {
     try {
       const command = new HeadObjectCommand({ Bucket, Key: key });
       return await s3.send(command);

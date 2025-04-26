@@ -5,11 +5,8 @@ import { Get, Post, Put, Delete } from "@/core/decorators";
 import { MediaService } from "./media.service";
 
 export class MediaController extends Controller {
-  private mediaService: MediaService;
-
-  constructor(mediaService: MediaService) {
+  constructor(private readonly mediaService: MediaService) {
     super();
-    this.mediaService = mediaService;
   }
 
   @Get("/")
@@ -27,7 +24,7 @@ export class MediaController extends Controller {
     return this.mediaService.uploadMedia(req);
   }
 
-  @Put()
+  @Put("/")
   async updateMedia(req: Req) {
     return this.mediaService.updateMedia(req);
   }

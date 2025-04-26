@@ -6,11 +6,9 @@ This project provides a minimal Node.js server (no Express) for uploading, retri
 
 ## ⚙️ Setup Instructions
 
-1. **Install dependencies**
+Node.js version: `20.18.1` or higher (20.x.x)
 
-```bash
-npm install
-```
+1. **Install dependencies**
 
 2. **Create `.env`**
 

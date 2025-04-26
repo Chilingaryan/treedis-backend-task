@@ -1,101 +1,76 @@
-import fs from "fs";
-import os from "os";
-import path from "path";
-import Busboy from "busboy";
-import { v4 as uuidv4 } from "uuid";
-
 import { Req } from "@/core/types";
-import { httpError } from "@/core/utils";
-import { S3Service as s3 } from "@/services/s3.service";
-import { hasFile, isAllowedMimeType, saveToTemp } from "./media.utils";
+import { hasFile } from "@/modules/media/media.utils";
+import { processUpload } from "@/core/upload/process-upload";
+import { IFileStorageService } from "@/services/storage/file-storage.interface";
 
 export class MediaService {
+  constructor(private readonly fileStorageService: IFileStorageService) {}
+
+  private allowedMimeTypes = [
+    "image/png",
+    "image/jpeg",
+    "application/pdf",
+    "video/mp4",
+  ];
+
   async getMedia(file?: string) {
     if (hasFile(file)) {
-      const stream = await s3.get(file!);
-      return stream;
+      return await this.fileStorageService.get(file!);
     }
   }
 
   async getMetadata(file?: string) {
     if (hasFile(file)) {
-      const metadata = await s3.getMetadata(file!);
-
-      if (!metadata) {
-        throw httpError("No metadata found", 404);
-      }
-
-      return metadata;
+      return await this.fileStorageService.getMetadata(file!);
     }
   }
 
   async updateMedia(req: Req) {
-    if (!req.query.file) {
-      throw httpError("Missing file key", 400);
-    }
+    if (hasFile(req.query.file)) {
+      const { fileName, readStream, mimeType, contentLength } =
+        await processUpload(req, {
+          allowedMimeTypes: this.allowedMimeTypes,
+          customFileName: req.query.file,
+        });
 
-    return this.processFileUpload(req, req.query.file);
+      await this.fileStorageService.upload(
+        fileName,
+        readStream,
+        mimeType,
+        contentLength
+      );
+
+      return {
+        message: "Replaced!",
+        fileName,
+      };
+    }
   }
 
   async uploadMedia(req: Req) {
-    return this.processFileUpload(req);
-  }
+    if (hasFile(req.query.file)) {
+      const { fileName, readStream, mimeType, contentLength } =
+        await processUpload(req, {
+          allowedMimeTypes: this.allowedMimeTypes,
+        });
 
-  private async processFileUpload(req: Req, fileName?: string) {
-    const busboy = Busboy({ headers: req.headers });
+      await this.fileStorageService.upload(
+        fileName,
+        readStream,
+        mimeType,
+        contentLength
+      );
 
-    const uploadPromise = new Promise((resolve, reject) => {
-      busboy.on("file", async (name, fileStream, file) => {
-        try {
-          const result = await this.handleFileUpload(
-            fileStream,
-            file,
-            fileName
-          );
-          resolve(result);
-        } catch (err) {
-          reject(httpError("File processing failed", 500));
-        }
-      });
-
-      busboy.on("error", () => reject(httpError("Upload error", 500)));
-    });
-
-    req.pipe(busboy);
-    return uploadPromise;
-  }
-
-  private async handleFileUpload(
-    fileStream: NodeJS.ReadableStream,
-    file: Busboy.FileInfo,
-    fileName?: string
-  ) {
-    if (!isAllowedMimeType(file.mimeType)) {
-      throw httpError(`Unsupported file type: ${file.mimeType}`, 400);
+      return {
+        message: "Uploaded!",
+        fileName,
+      };
     }
-
-    const ext = path.extname(file.filename);
-    const finalKey = fileName ?? uuidv4() + ext;
-    const tmpFilePath = path.join(os.tmpdir(), finalKey);
-
-    await saveToTemp(fileStream, tmpFilePath);
-
-    const contentLength = fs.statSync(tmpFilePath).size;
-    const readStream = fs.createReadStream(tmpFilePath);
-
-    await s3.upload(finalKey, readStream, file.mimeType, contentLength);
-
-    fs.unlinkSync(tmpFilePath);
-
-    return {
-      message: fileName ? "Replaced!" : "Uploaded!",
-      fileName: finalKey,
-    };
   }
 
   async deleteMedia(file?: string) {
     if (hasFile(file)) {
-      return await s3.delete(file!);
+      return await this.fileStorageService.delete(file!);
     }
   }
 }
