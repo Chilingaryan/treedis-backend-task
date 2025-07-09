@@ -5,7 +5,7 @@ export interface IFileStorageService {
     key: string,
     body: Buffer | Readable,
     contentType: string,
-    contentLength: number
+    contentLength: number,
   ): Promise<{ success: boolean }>;
 
   get(key: string): Promise<Readable>;

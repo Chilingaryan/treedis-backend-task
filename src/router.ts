@@ -15,7 +15,11 @@ export class Router {
 
   private routes: Route[] = [];
 
-  normalizePath(path: string = ""): string {
+  private middlewares: any[] = [];
+
+  private watchers: any[] = [];
+
+  private normalizePath(path: string = ""): string {
     return "/" + path.trim().replace(/\/+$/, "").replace(/^\/+/, "");
   }
 
@@ -45,7 +49,14 @@ export class Router {
 
     if (exactController) {
       try {
-        const data = await exactController.handler!(req, res);
+        // for (let i = 0; i < this.middlewares.length; i++) {
+        //   await this.middlewares[i]();
+        // }
+
+        const data = await Promise.race([
+          exactController.handler!(req, res),
+          ...this.watchers.map((item) => item()),
+        ]);
 
         if (data instanceof Stream) {
           data.pipe(res);
@@ -70,5 +81,13 @@ export class Router {
     }
 
     send(res, 404, { message: "Route not found" });
+  }
+
+  public registerMiddleware(middleware: any) {
+    this.middlewares.push(middleware);
+  }
+
+  public registerWatcher(watcher: any) {
+    this.watchers.push(watcher);
   }
 }

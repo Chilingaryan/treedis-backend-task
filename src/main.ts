@@ -1,9 +1,9 @@
-import http from "http";
 import dotenv from "dotenv";
 import "dotenv/config";
 
 import { Router } from "@/router";
-import { queryfy } from "./core/utils";
+import { runServer } from "./core/server";
+import { timeout } from "./middlewares/timeout";
 import { ServerConfig } from "@/config/server.config";
 import { MediaService } from "@/modules/media/media.service";
 import { S3Service } from "@/services/storage/s3-storage.service";
@@ -18,12 +18,8 @@ const fileStorageService = new S3Service();
 const mediaService = new MediaService(fileStorageService);
 const mediaController = new MediaController(mediaService);
 
+// router.registerWatcher(timeout(5000));
+
 router.add("/media", mediaController);
 
-const server = http.createServer((req, res) => {
-  return router.handle.bind(router)(queryfy(req), res);
-});
-
-server.listen(ServerConfig.port, () =>
-  console.log(`Server listens to port: ${ServerConfig.port}`)
-);
+runServer(router, ServerConfig.port);

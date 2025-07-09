@@ -1,11 +1,11 @@
-import { Readable } from "stream";
 import {
-  PutObjectCommand,
   GetObjectCommand,
-  DeleteObjectCommand,
   HeadObjectCommand,
   S3ServiceException,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
+import { Readable } from "stream";
+import { Upload } from "@aws-sdk/lib-storage";
 
 import { s3 } from "@/config/aws.config";
 import { httpError } from "@/core/utils";
@@ -19,23 +19,32 @@ const s3ErrorMessages = {
   AccessDenied: "Access denied",
   InvalidObjectState: "Invalid file",
 };
+
 export class S3Service implements IFileStorageService {
   async upload(
     key: string,
     body: Buffer | Readable,
     contentType: string,
-    contentLength: number
+    contentLength: number,
   ) {
     try {
-      const command = new PutObjectCommand({
-        Bucket,
-        Key: key,
-        Body: body,
-        ContentType: contentType,
-        ContentLength: contentLength,
+      const parallelUpload = new Upload({
+        client: s3,
+        params: {
+          Bucket,
+          Key: key,
+          Body: body,
+          ContentType: contentType,
+          ContentLength: contentLength,
+        },
       });
 
-      await s3.send(command);
+      // parallelUpload.on("httpUploadProgress", (progress) => {
+      //   console.log(progress);
+      // });
+
+      await parallelUpload.done();
+
       return { success: true };
     } catch (err) {
       throw httpError(err);

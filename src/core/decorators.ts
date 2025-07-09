@@ -4,7 +4,7 @@ const addRoute = (
   method: string,
   path: string,
   target: any,
-  propertyKey: string
+  propertyKey: string,
 ) => {
   if (!target.constructor.__routes) {
     target.constructor.__routes = [];

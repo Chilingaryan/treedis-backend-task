@@ -15,7 +15,7 @@ export function send(
   res: ServerResponse,
   statusCode: number = 500,
   data: unknown,
-  contentType = "application/json"
+  contentType = "application/json",
 ) {
   res.writeHead(statusCode, { "Content-Type": contentType });
   res.end(stringify(data));
@@ -29,7 +29,7 @@ export const queryfy = (req: IncomingMessage): Req => {
 
 export const httpError = (
   message: unknown,
-  status: number = 500
+  status: number = 500,
 ): HttpError => ({
   type: "HttpError",
   status,

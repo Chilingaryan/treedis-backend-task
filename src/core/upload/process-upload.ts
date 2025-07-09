@@ -3,8 +3,8 @@ import { Readable } from "stream";
 
 import {
   getFileSize,
-  saveToTemp,
   createReadStream,
+  saveToTempStream,
   generateTempFilePath,
 } from "./upload.utils";
 import { Req } from "@/core/types";
@@ -14,6 +14,7 @@ export interface ProcessUploadData {
   fileName: string;
   mimeType: string;
   contentLength: number;
+  tmpFilePath: string;
   readStream: Buffer | Readable;
 }
 
@@ -24,44 +25,47 @@ export interface ProcessUploadOptions {
 
 export async function processUpload(
   req: Req,
-  options?: ProcessUploadOptions
+  options?: ProcessUploadOptions,
 ): Promise<ProcessUploadData> {
   const { allowedMimeTypes = [] } = options || {};
 
   const busboy = Busboy({ headers: req.headers });
 
   const uploadPromise = new Promise<ProcessUploadData>((resolve, reject) => {
-    busboy.on("file", async (name, fileStream, file) => {
-      try {
-        // prettier-ignore
-        if (allowedMimeTypes.length && !allowedMimeTypes.includes(file.mimeType)) {
-          return reject(
-            httpError(`Unsupported file type: ${file.mimeType}`, 400)
-          );
-        }
-
-        const { finalKey, tmpFilePath } = generateTempFilePath(
-          file.filename,
-          options?.customFileName
+    busboy.on("file", (name, fileStream, file) => {
+      if (
+        allowedMimeTypes.length &&
+        !allowedMimeTypes.includes(file.mimeType)
+      ) {
+        fileStream.resume(); // prevent stream hang
+        return reject(
+          httpError(`Unsupported file type: ${file.mimeType}`, 400),
         );
-
-        await saveToTemp(fileStream, tmpFilePath);
-
-        const contentLength = getFileSize(tmpFilePath);
-        const readStream = createReadStream(tmpFilePath);
-
-        resolve({
-          fileName: finalKey,
-          mimeType: file.mimeType,
-          readStream,
-          contentLength,
-        });
-      } catch (err) {
-        reject(httpError("File processing failed", 500));
       }
-    });
 
-    busboy.on("error", () => reject(httpError("Upload error", 500)));
+      const { finalKey, tmpFilePath } = generateTempFilePath(
+        file.filename,
+        options?.customFileName,
+      );
+
+      saveToTempStream(fileStream, tmpFilePath)
+        .then(() => {
+          const contentLength = getFileSize(tmpFilePath);
+          const readStream = createReadStream(tmpFilePath);
+
+          resolve({
+            fileName: finalKey,
+            mimeType: file.mimeType,
+            readStream,
+            contentLength,
+            tmpFilePath, // keep for later deletion
+          });
+        })
+        .catch((err) => {
+          reject(httpError("File processing failed", 500));
+          console.log(2222);
+        });
+    });
   });
 
   req.pipe(busboy);
