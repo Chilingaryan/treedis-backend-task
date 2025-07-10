@@ -1,27 +1,14 @@
 import Busboy from "busboy";
-import { Readable } from "stream";
+import { createReadStream } from "fs";
 
 import {
   getFileSize,
-  createReadStream,
   saveToTempStream,
   generateTempFilePath,
 } from "./upload.utils";
 import { Req } from "@/core/types";
 import { httpError } from "@/core/utils";
-
-export interface ProcessUploadData {
-  fileName: string;
-  mimeType: string;
-  contentLength: number;
-  tmpFilePath: string;
-  readStream: Buffer | Readable;
-}
-
-export interface ProcessUploadOptions {
-  allowedMimeTypes?: string[];
-  customFileName?: string;
-}
+import type { ProcessUploadData, ProcessUploadOptions } from "./types";
 
 export async function processUpload(
   req: Req,
@@ -37,7 +24,7 @@ export async function processUpload(
         allowedMimeTypes.length &&
         !allowedMimeTypes.includes(file.mimeType)
       ) {
-        fileStream.resume(); // prevent stream hang
+        fileStream.resume();
         return reject(
           httpError(`Unsupported file type: ${file.mimeType}`, 400),
         );

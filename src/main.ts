@@ -8,6 +8,8 @@ import { ServerConfig } from "@/config/server.config";
 import { MediaService } from "@/modules/media/media.service";
 import { S3Service } from "@/services/storage/s3-storage.service";
 import { MediaController } from "@/modules/media/media.controller";
+import { UploadWorkerService } from "./services/upload/upload-worker.service";
+import { redis } from "./config/redis.config";
 
 dotenv.config();
 
@@ -17,6 +19,10 @@ const fileStorageService = new S3Service();
 
 const mediaService = new MediaService(fileStorageService);
 const mediaController = new MediaController(mediaService);
+
+const uploadWorker = new UploadWorkerService(fileStorageService, redis);
+
+uploadWorker.createWorker();
 
 // router.registerWatcher(timeout(5000));
 

@@ -4,26 +4,14 @@ import { v4 as uuidv4 } from "uuid";
 import { pipeline } from "stream/promises";
 import fs, { createWriteStream } from "fs";
 
+console.log(os.tmpdir());
+
 export async function saveToTempStream(
   fileStream: NodeJS.ReadableStream,
   tmpFilePath: string,
 ): Promise<void> {
   await pipeline(fileStream, createWriteStream(tmpFilePath));
 }
-
-// export const saveToTemp = (
-//   fileStream: NodeJS.ReadableStream,
-//   path: string,
-// ): Promise<void> => {
-//   return new Promise((resolve, reject) => {
-//     const writeStream = fs.createWriteStream(path);
-//     fileStream.pipe(writeStream);
-//     writeStream.on("finish", resolve);
-//     writeStream.on("error", reject);
-//   });
-// };
-
-console.log(os.tmpdir());
 
 export const generateTempFilePath = (
   originalFilename?: string,
@@ -37,8 +25,4 @@ export const generateTempFilePath = (
 
 export const getFileSize = (filePath: string) => {
   return fs.statSync(filePath).size;
-};
-
-export const createReadStream = (filePath: string) => {
-  return fs.createReadStream(filePath);
 };

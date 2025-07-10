@@ -1,8 +1,8 @@
 import { Req } from "@/core/types";
 import { hasFile } from "@/modules/media/media.utils";
-import { processUpload } from "@/core/upload/process-upload";
+import { processUpload } from "@/modules/media/upload/process-upload";
 import { IFileStorageService } from "@/services/storage/file-storage.interface";
-import { uploadQueue } from "@/services/queue.service";
+import { uploadQueue } from "@/services/queue/queue.service";
 
 export class MediaService {
   constructor(private readonly fileStorageService: IFileStorageService) {}
@@ -15,9 +15,9 @@ export class MediaService {
     "application/json", // Todo: Testing purpose
   ];
 
-  async getMedia(file?: string) {
+  async getMedia(file: string) {
     if (hasFile(file)) {
-      return await this.fileStorageService.get(file!);
+      return await this.fileStorageService.get(file);
     }
   }
 
@@ -35,12 +35,14 @@ export class MediaService {
           customFileName: req.query.file,
         });
 
-      await this.fileStorageService.upload(
-        fileName,
-        readStream,
-        mimeType,
-        contentLength,
-      );
+      // Todo: make appropriate changes here
+
+      // await this.fileStorageService.upload(
+      //   fileName,
+      //   readStream,
+      //   mimeType,
+      //   contentLength,
+      // );
 
       return {
         message: "Replaced!",
@@ -55,25 +57,16 @@ export class MediaService {
         allowedMimeTypes: this.allowedMimeTypes,
       });
 
-    const job = await uploadQueue.add("upload", {
-      filePath: tmpFilePath,
+    await uploadQueue.add("upload", {
+      tmpFilePath,
       fileName,
-      // contentType,
       contentLength,
-      // uploadId,
+      readStream,
+      mimeType,
     });
 
-    console.log(job);
-
-    // await this.fileStorageService.upload(
-    //   fileName,
-    //   readStream,
-    //   mimeType,
-    //   contentLength,
-    // );
-
     return {
-      message: "Uploaded!",
+      message: "Queued",
       fileName,
     };
   }

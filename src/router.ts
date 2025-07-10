@@ -4,7 +4,7 @@ import { IncomingMessage, ServerResponse } from "http";
 
 import { send, stringify } from "@/core/utils";
 import { Controller } from "@/core/controller";
-import { Logger } from "@/services/logger.service";
+import { Logger } from "@/services/logger/logger.service";
 import { ControllerInstance, HttpError, Route } from "@/core/types";
 
 export class Router {

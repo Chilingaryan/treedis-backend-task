@@ -5,6 +5,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
+import { createReadStream } from "fs";
 import { Upload } from "@aws-sdk/lib-storage";
 
 import { s3 } from "@/config/aws.config";
@@ -22,18 +23,21 @@ const s3ErrorMessages = {
 
 export class S3Service implements IFileStorageService {
   async upload(
+    tmpFilePath: string,
     key: string,
     body: Buffer | Readable,
     contentType: string,
     contentLength: number,
   ) {
     try {
+      const fileStream = createReadStream(tmpFilePath);
+
       const parallelUpload = new Upload({
         client: s3,
         params: {
           Bucket,
           Key: key,
-          Body: body,
+          Body: fileStream,
           ContentType: contentType,
           ContentLength: contentLength,
         },
@@ -51,21 +55,27 @@ export class S3Service implements IFileStorageService {
     }
   }
 
+  // Todo: Make better error handling
   async get(key: string) {
-    try {
-      const command = new GetObjectCommand({ Bucket, Key: key });
-      const response = await s3.send(command);
-      return response.Body as Readable;
-    } catch (err) {
-      const error = err as S3ServiceException;
-      const name = error.name as keyof typeof s3ErrorMessages;
+    const command = new GetObjectCommand({ Bucket, Key: key });
+    const response = await s3.send(command);
+    return response.Body as Readable;
+    // return response;
 
-      if (name in s3ErrorMessages) {
-        throw httpError(s3ErrorMessages[name], 404);
-      }
+    // try {
+    //   const command = new GetObjectCommand({ Bucket, Key: key });
+    //   const response = await s3.send(command);
+    //   return response.Body as Readable;
+    // } catch (err) {
+    //   const error = err as S3ServiceException;
+    //   const name = error.name as keyof typeof s3ErrorMessages;
 
-      throw httpError(err);
-    }
+    //   if (name in s3ErrorMessages) {
+    //     throw httpError(s3ErrorMessages[name], 404);
+    //   }
+
+    //   throw httpError(err);
+    // }
   }
 
   async delete(key: string) {

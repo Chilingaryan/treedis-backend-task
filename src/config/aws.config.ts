@@ -9,7 +9,7 @@ import { S3, S3Client } from "@aws-sdk/client-s3";
 // });
 
 export const s3 = new S3({
-  endpoint: "http://localhost:9000",
+  endpoint: process.env.S3_ENDPOINT || "http://localhost:9000",
   credentials: {
     accessKeyId: "minioadmin",
     secretAccessKey: "minioadmin",
