@@ -8,12 +8,15 @@ import {
 } from "./upload.utils";
 import { Req } from "@/core/types";
 import { httpError } from "@/core/utils";
-import type { ProcessUploadData, ProcessUploadOptions } from "./types";
+import type {
+  ProcessUploadData,
+  ProcessUploadOptions,
+} from "./upload.interface";
 
-export async function processUpload(
+export const processUpload = (
   req: Req,
   options?: ProcessUploadOptions,
-): Promise<ProcessUploadData> {
+): Promise<ProcessUploadData> => {
   const { allowedMimeTypes = [] } = options || {};
 
   const busboy = Busboy({ headers: req.headers });
@@ -30,14 +33,14 @@ export async function processUpload(
         );
       }
 
-      const { finalKey, tmpFilePath } = generateTempFilePath(
+      const { uploadId, finalKey, tmpFilePath } = generateTempFilePath(
         file.filename,
         options?.customFileName,
       );
 
       saveToTempStream(fileStream, tmpFilePath)
-        .then(() => {
-          const contentLength = getFileSize(tmpFilePath);
+        .then(async () => {
+          const contentLength = await getFileSize(tmpFilePath);
           const readStream = createReadStream(tmpFilePath);
 
           resolve({
@@ -46,15 +49,18 @@ export async function processUpload(
             readStream,
             contentLength,
             tmpFilePath, // keep for later deletion
+            uploadId,
           });
         })
         .catch((err) => {
           reject(httpError("File processing failed", 500));
-          console.log(2222);
         });
     });
+
+    busboy.on("error", console.log);
   });
 
   req.pipe(busboy);
+
   return uploadPromise;
-}
+};

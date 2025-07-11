@@ -1,8 +1,9 @@
 import os from "os";
 import path from "path";
+import { stat } from "fs/promises";
 import { v4 as uuidv4 } from "uuid";
+import { createWriteStream } from "fs";
 import { pipeline } from "stream/promises";
-import fs, { createWriteStream } from "fs";
 
 console.log(os.tmpdir());
 
@@ -18,11 +19,13 @@ export const generateTempFilePath = (
   customFileName?: string,
 ) => {
   const ext = originalFilename ? path.extname(originalFilename) : "";
-  const finalKey = customFileName ?? uuidv4() + ext;
+  const uploadId = uuidv4();
+  const finalKey = customFileName ?? uploadId + ext;
   const tmpFilePath = path.join(os.tmpdir(), finalKey);
-  return { finalKey, tmpFilePath };
+  return { uploadId, finalKey, tmpFilePath };
 };
 
-export const getFileSize = (filePath: string) => {
-  return fs.statSync(filePath).size;
+export const getFileSize = async (filePath: string) => {
+  const stats = await stat(filePath);
+  return stats.size;
 };

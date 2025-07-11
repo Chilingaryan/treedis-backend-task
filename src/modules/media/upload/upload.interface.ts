@@ -5,6 +5,7 @@ export interface ProcessUploadData {
   mimeType: string;
   contentLength: number;
   tmpFilePath: string;
+  uploadId: string;
   readStream: Buffer | Readable;
 }
 

@@ -1,11 +1,13 @@
-import { parse } from "url";
 import Stream from "stream";
+import { parse } from "url";
 import { IncomingMessage, ServerResponse } from "http";
 
 import { send, stringify } from "@/core/utils";
 import { Controller } from "@/core/controller";
 import { Logger } from "@/services/logger/logger.service";
 import { ControllerInstance, HttpError, Route } from "@/core/types";
+
+const logger = Logger.forContext("Router");
 
 export class Router {
   // private apiPrefix = "";
@@ -64,17 +66,17 @@ export class Router {
           send(res, 200, data);
         }
 
-        Logger.success(req.url!);
+        logger.success(req.url!);
       } catch (e: unknown) {
         const httpError = e as HttpError;
         const basicError = e as ErrorEvent;
 
         if (httpError.type !== "HttpError") {
           send(res, httpError.status, httpError.message);
-          Logger.error(req.url!, stringify(httpError.message));
+          logger.error(req.url!, stringify(httpError.message));
         } else {
           send(res, 500, basicError);
-          Logger.error(req.url!, stringify(basicError.message));
+          logger.error(req.url!, stringify(basicError.message));
         }
       }
       return;

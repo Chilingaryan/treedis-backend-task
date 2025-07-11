@@ -2,33 +2,33 @@ import IORedis from "ioredis";
 import { Worker } from "bullmq";
 import { unlink } from "fs/promises";
 
-import { Logger } from "../logger/logger.service";
-import { IFileStorageService } from "../storage/file-storage.interface";
+import { SocketGateway } from "@/core/socket-gateway";
+import { Logger } from "@/services/logger/logger.service";
+import { IFileStorageService } from "@/services/storage/file-storage.interface";
 
-// Todo: replace
-const io = { emit: (...args: any) => ({}) };
+const logger = Logger.forContext("UploadWorkerService");
 
 export class UploadWorkerService {
-  private connection: IORedis;
-
   constructor(
     private readonly fileStorageService: IFileStorageService,
-    // Todo: Bad! replace
-    connection: IORedis,
-  ) {
-    this.connection = connection;
-  }
+    private readonly transport: SocketGateway,
+    private readonly queue: IORedis,
+  ) {}
 
   async createWorker() {
     const worker = new Worker(
       "upload",
       async (job) => {
-        const { tmpFilePath, fileName, contentLength, readStream, mimeType } =
-          job.data;
+        const {
+          uploadId,
+          tmpFilePath,
+          fileName,
+          contentLength,
+          readStream,
+          mimeType,
+        } = job.data;
 
         try {
-          console.log("BOBIK", fileName, readStream, mimeType, contentLength);
-
           await this.fileStorageService.upload(
             tmpFilePath,
             fileName,
@@ -39,23 +39,35 @@ export class UploadWorkerService {
 
           await unlink(tmpFilePath);
 
-          // Emit socket event
-          io.emit("upload:success", { fileName });
+          this.transport.emitToRoom(
+            `uploadId:${uploadId}`,
+            "upload:success",
+            fileName,
+          );
         } catch (err: any) {
-          await unlink(tmpFilePath).catch(() => {}); // Try to cleanup anyway
-          io.emit("upload:failed", { error: err.message });
+          // await unlink(tmpFilePath).catch(() => {}); // Try to cleanup anyway
+
+          logger.error(err);
+
+          // console.log({ err });
+
+          this.transport.emitToRoom(
+            `uploadId:${uploadId}`,
+            "upload:failed",
+            err.message,
+          );
           throw err;
         }
       },
-      { connection: this.connection },
+      { connection: this.queue },
     );
 
     worker.on("failed", (job, err) => {
-      Logger.error(`Job ${job?.id} failed:`, err as any);
+      logger.error(`Job ${job?.id} failed:`, err as any);
     });
 
     worker.on("completed", (job) => {
-      Logger.success(`Job ${job?.id} completed`);
+      logger.success(`Job ${job?.id} completed`);
     });
 
     return worker;

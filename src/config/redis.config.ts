@@ -7,3 +7,5 @@ export const redis = new IORedis(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
 });
+
+redis.on("error", (e) => console.log("ERROR!!", e));

@@ -1,8 +1,8 @@
 import { Req } from "@/core/types";
 import { hasFile } from "@/modules/media/media.utils";
+import { uploadQueue } from "@/services/queue/queue.service";
 import { processUpload } from "@/modules/media/upload/process-upload";
 import { IFileStorageService } from "@/services/storage/file-storage.interface";
-import { uploadQueue } from "@/services/queue/queue.service";
 
 export class MediaService {
   constructor(private readonly fileStorageService: IFileStorageService) {}
@@ -12,7 +12,6 @@ export class MediaService {
     "image/jpeg",
     "application/pdf",
     "video/mp4",
-    "application/json", // Todo: Testing purpose
   ];
 
   async getMedia(file: string) {
@@ -52,22 +51,41 @@ export class MediaService {
   }
 
   async uploadMedia(req: Req) {
-    const { fileName, readStream, mimeType, contentLength, tmpFilePath } =
-      await processUpload(req, {
-        allowedMimeTypes: this.allowedMimeTypes,
-      });
-
-    await uploadQueue.add("upload", {
-      tmpFilePath,
+    const {
+      uploadId,
       fileName,
-      contentLength,
       readStream,
       mimeType,
+      contentLength,
+      tmpFilePath,
+    } = await processUpload(req, {
+      allowedMimeTypes: this.allowedMimeTypes,
     });
+
+    await uploadQueue.add(
+      "upload",
+      {
+        uploadId,
+        tmpFilePath,
+        fileName,
+        contentLength,
+        readStream,
+        mimeType,
+      },
+      {
+        attempts: 5,
+        backoff: {
+          // type: "exponential",
+          type: "fixed",
+          // delay: 2000,
+        },
+      },
+    );
 
     return {
       message: "Queued",
       fileName,
+      uploadId,
     };
   }
 

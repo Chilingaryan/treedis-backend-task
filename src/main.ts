@@ -2,25 +2,35 @@ import dotenv from "dotenv";
 import "dotenv/config";
 
 import { Router } from "@/router";
-import { runServer } from "./core/server";
-import { timeout } from "./middlewares/timeout";
+import { redis } from "@/config/redis.config";
+import { timeout } from "@/middlewares/timeout";
+import { SocketGateway } from "@/core/socket-gateway";
 import { ServerConfig } from "@/config/server.config";
 import { MediaService } from "@/modules/media/media.service";
 import { S3Service } from "@/services/storage/s3-storage.service";
 import { MediaController } from "@/modules/media/media.controller";
-import { UploadWorkerService } from "./services/upload/upload-worker.service";
-import { redis } from "./config/redis.config";
+import { createHttpServer, createSocketServer } from "@/core/server";
+import { UploadWorkerService } from "@/services/upload/upload-worker.service";
+import { Logger } from "./services/logger/logger.service";
 
 dotenv.config();
 
 const router = new Router();
-
 const fileStorageService = new S3Service();
 
 const mediaService = new MediaService(fileStorageService);
 const mediaController = new MediaController(mediaService);
 
-const uploadWorker = new UploadWorkerService(fileStorageService, redis);
+const server = createHttpServer(router);
+const io = createSocketServer(server);
+const socketGateway = SocketGateway.getInstance();
+socketGateway.attachServer(io);
+
+const uploadWorker = new UploadWorkerService(
+  fileStorageService,
+  socketGateway,
+  redis,
+);
 
 uploadWorker.createWorker();
 
@@ -28,4 +38,8 @@ uploadWorker.createWorker();
 
 router.add("/media", mediaController);
 
-runServer(router, ServerConfig.port);
+const logger = Logger.forContext("Main");
+
+server.listen(ServerConfig.port, () => {
+  logger.info(`Server running on port ${ServerConfig.port}`);
+});

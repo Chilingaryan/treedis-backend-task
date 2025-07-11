@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>File Upload</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h1>Upload File</h1>
+
+    <p id="message"></p>
+
+    <input type="file" id="fileInput" />
+    <button id="btn_upload" onclick="uploadFile()">Upload</button>
+
+    <video controls preload="auto" width="640" height="360">
+      <source id="vid" />
+      Your browser does not support the video tag.
+    </video>
+
+    <img id="img" style="width: 640px; height: 360px; object-fit: cover" />
+
+    <script>
+      const stringify = (data) => {
+        if (typeof data === "object") {
+          return JSON.stringify(data);
+        } else {
+          return `${data}`;
+        }
+      };
+
+      const getBtnUpload = () => document.getElementById("btn_upload");
+      const getMessage = () => document.getElementById("message");
+
+      const connect = (uploadId = "7c619502-abfa-4c22-8ba6-0e952b5e1591") => {
+        const socket = io("ws://localhost:8000", { query: { uploadId } });
+
+        socket.on("connect", () => {
+          console.log("Connected with socket ID:", socket.id);
+        });
+
+        socket.on("upload:success", (filename) => {
+          getBtnUpload().innerText = "Upload";
+          getBtnUpload().disabled = false;
+          getMessage().innerText = "Uploaded to S3";
+
+          const id = filename.includes(".mp4") ? "vid" : "img";
+          const element = document.getElementById(id);
+
+          element.setAttribute(
+            "src",
+            `http://localhost:8000/media?file=${filename}`,
+          );
+          element.parentElement?.load?.();
+          socket.close();
+        });
+
+        socket.on("upload:failed", (err) => {
+          getBtnUpload().disabled = false;
+          getBtnUpload().innerText = "Upload";
+          getMessage().innerText = stringify(err);
+        });
+
+        socket.on("disconnect", () => {
+          console.log("Disconnected from server");
+        });
+      };
+
+      async function uploadFile() {
+        const fileInput = document.getElementById("fileInput");
+        if (!fileInput.files.length) {
+          alert("Please select a file first.");
+          return;
+        }
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          getMessage().innerText = "Uploading to server";
+          getBtnUpload().disabled = true;
+
+          const response = await fetch("http://localhost:8000/media", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Upload failed: ${response.statusText}`);
+          }
+
+          getMessage().innerText = "Queuing...";
+          getBtnUpload().innerText = "Queuing...";
+
+          const result = await response.json();
+
+          connect(result.uploadId);
+        } catch (error) {
+          console.error(error);
+          alert("Error uploading file");
+        }
+      }
+    </script>
+  </body>
+</html>
