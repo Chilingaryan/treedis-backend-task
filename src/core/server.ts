@@ -1,8 +1,11 @@
 import http from "http";
+import finalHandler from "finalHandler";
 import { Server as SocketIOServer } from "socket.io";
+
 import { Router } from "@/router";
-import { SocketGateway } from "./socket-gateway";
 import { queryfy } from "./utils";
+import { SocketGateway } from "./socket-gateway";
+import { bullBoardApp } from "./queue-dashboard";
 
 export const createHttpServer = (router: Router) => {
   const server = http.createServer((req, res) => {
@@ -12,6 +15,12 @@ export const createHttpServer = (router: Router) => {
       "GET,POST,PUT,DELETE,OPTIONS",
     );
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.url?.includes("/admin/queues")) {
+      bullBoardApp(req, res, finalHandler(req, res));
+      return;
+    }
+
     return router.handle.bind(router)(queryfy(req), res);
   });
 
