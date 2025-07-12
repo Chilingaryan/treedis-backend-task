@@ -1,6 +1,3 @@
-import dotenv from "dotenv";
-import "dotenv/config";
-
 import { Router } from "@/router";
 import { redis } from "@/config/redis.config";
 import { timeout } from "@/middlewares/timeout";
@@ -12,8 +9,6 @@ import { MediaController } from "@/modules/media/media.controller";
 import { createHttpServer, createSocketServer } from "@/core/server";
 import { UploadWorkerService } from "@/services/upload/upload-worker.service";
 import { Logger } from "./services/logger/logger.service";
-
-dotenv.config();
 
 const router = new Router();
 const fileStorageService = new S3Service();

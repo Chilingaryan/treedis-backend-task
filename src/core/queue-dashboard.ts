@@ -1,8 +1,9 @@
-import { uploadQueue } from "@/services/queue/queue.service";
-import { createBullBoard } from "@bull-board/api";
-import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
-import { ExpressAdapter } from "@bull-board/express";
 import connect from "connect";
+import { createBullBoard } from "@bull-board/api";
+import { ExpressAdapter } from "@bull-board/express";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
+
+import { uploadQueue } from "@/services/queue/queue.service";
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/admin/queues");

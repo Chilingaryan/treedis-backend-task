@@ -1,5 +1,5 @@
 import http from "http";
-import finalHandler from "finalHandler";
+import finalHandler from "finalhandler";
 import { Server as SocketIOServer } from "socket.io";
 
 import { Router } from "@/router";

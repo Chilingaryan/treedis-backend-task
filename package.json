@@ -2,14 +2,18 @@
   "name": "media-service",
   "version": "1.0.0",
   "main": "main.ts",
-  "type": "module",
   "engineStrict": true,
   "engines": {
     "node": "^20.18.1"
   },
   "scripts": {
+    "start": "tsx ./src/main.ts",
+    "build": "node build.js",
     "dev": "tsx watch ./src/main.ts",
-    "start": "tsx ./src/main.ts"
+    "prod": "npm run build && node dist/main.js",
+    "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev up --build",
+    "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up --build",
+    "docker:down": "docker-compose down --volumes --remove-orphans"
   },
   "author": "",
   "license": "ISC",
@@ -21,7 +25,10 @@
     "@types/node": "^22.14.1",
     "@types/qs": "^6.9.18",
     "@types/socket.io": "^3.0.1",
-    "tsx": "^4.19.3"
+    "esbuild": "^0.25.6",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
