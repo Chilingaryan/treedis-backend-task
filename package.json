@@ -13,7 +13,7 @@
     "prod": "npm run build && node dist/main.js",
     "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev up --build",
     "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up --build",
-    "docker:down": "docker-compose down --volumes --remove-orphans"
+    "docker:down": "docker-compose down -v --volumes --remove-orphans"
   },
   "author": "",
   "license": "ISC",
@@ -25,10 +25,13 @@
     "@types/node": "^22.14.1",
     "@types/qs": "^6.9.18",
     "@types/socket.io": "^3.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.36.0",
+    "@typescript-eslint/parser": "^8.36.0",
     "esbuild": "^0.25.6",
-    "tsconfig-paths": "^4.2.0",
-    "tsx": "^4.19.3",
-    "typescript": "^5.8.3"
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.1",
+    "tsx": "^4.19.3"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
@@ -38,7 +41,6 @@
     "bullmq": "^5.56.2",
     "busboy": "^1.6.0",
     "connect": "^3.7.0",
-    "dotenv": "^16.5.0",
     "finalhandler": "^2.1.0",
     "ioredis": "^5.6.1",
     "qs": "^6.14.0",

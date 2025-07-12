@@ -16,8 +16,11 @@ services:
       - redis
     ports:
       - "8000:8000"
+
     environment:
       REDIS_URL: redis://redis:6379
+      NODE_OPTIONS: --max-old-space-size=8192 # Feel free to adjust
+    mem_limit: 8g # Feel free to adjust
 
 volumes:
   redis-data:

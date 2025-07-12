@@ -1,17 +1,19 @@
 import Busboy from "busboy";
-import { createReadStream } from "fs";
 
 import {
   getFileSize,
   saveToTempStream,
   generateTempFilePath,
 } from "./upload.utils";
-import { Req } from "@/core/types";
-import { httpError } from "@/core/utils";
 import type {
   ProcessUploadData,
   ProcessUploadOptions,
 } from "./upload.interface";
+import { Req } from "@/core/types";
+import { HttpError } from "@/shared/errors/http-error";
+import { Logger } from "@/shared/logger/logger";
+
+const logger = Logger.forContext("process-upload");
 
 export const processUpload = (
   req: Req,
@@ -29,7 +31,11 @@ export const processUpload = (
       ) {
         fileStream.resume();
         return reject(
-          httpError(`Unsupported file type: ${file.mimeType}`, 400),
+          new HttpError(
+            `Unsupported file type ${file.mimeType}`,
+            415,
+            "processUpload",
+          ),
         );
       }
 
@@ -41,23 +47,21 @@ export const processUpload = (
       saveToTempStream(fileStream, tmpFilePath)
         .then(async () => {
           const contentLength = await getFileSize(tmpFilePath);
-          const readStream = createReadStream(tmpFilePath);
 
           resolve({
             fileName: finalKey,
             mimeType: file.mimeType,
-            readStream,
             contentLength,
             tmpFilePath, // keep for later deletion
             uploadId,
           });
         })
         .catch((err) => {
-          reject(httpError("File processing failed", 500));
+          reject(new HttpError("File processing failed", 500));
         });
     });
 
-    busboy.on("error", console.log);
+    busboy.on("error", (e) => logger.error(e as string));
   });
 
   req.pipe(busboy);

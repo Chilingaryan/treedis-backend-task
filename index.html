@@ -79,7 +79,7 @@
 
         try {
           getMessage().innerText = "Uploading to server";
-          getBtnUpload().disabled = true;
+          // getBtnUpload().disabled = true;
 
           const response = await fetch("http://localhost:8000/media", {
             method: "POST",

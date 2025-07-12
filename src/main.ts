@@ -1,40 +1,31 @@
-import { Router } from "@/router";
-import { redis } from "@/config/redis.config";
-import { timeout } from "@/middlewares/timeout";
-import { SocketGateway } from "@/core/socket-gateway";
+import { Logger } from "@/shared/logger/logger";
+// import { timeout } from "@/middlewares/timeout";
 import { ServerConfig } from "@/config/server.config";
-import { MediaService } from "@/modules/media/media.service";
-import { S3Service } from "@/services/storage/s3-storage.service";
-import { MediaController } from "@/modules/media/media.controller";
+import { SocketGateway } from "@/core/socket-gateway";
+import { cleanupOldTmpFiles } from "@/core/bootstrap/cleanup";
+import { initializeRouter } from "@/core/bootstrap/initialize-app";
 import { createHttpServer, createSocketServer } from "@/core/server";
-import { UploadWorkerService } from "@/services/upload/upload-worker.service";
-import { Logger } from "./services/logger/logger.service";
-
-const router = new Router();
-const fileStorageService = new S3Service();
-
-const mediaService = new MediaService(fileStorageService);
-const mediaController = new MediaController(mediaService);
-
-const server = createHttpServer(router);
-const io = createSocketServer(server);
-const socketGateway = SocketGateway.getInstance();
-socketGateway.attachServer(io);
-
-const uploadWorker = new UploadWorkerService(
-  fileStorageService,
-  socketGateway,
-  redis,
-);
-
-uploadWorker.createWorker();
-
-// router.registerWatcher(timeout(5000));
-
-router.add("/media", mediaController);
+import { registerShutdown } from "@/core/bootstrap/graceful-shutdown";
+import { initializeUploadWorker } from "@/core/bootstrap/initialize-workers";
 
 const logger = Logger.forContext("Main");
 
-server.listen(ServerConfig.port, () => {
-  logger.info(`Server running on port ${ServerConfig.port}`);
-});
+async function bootstrap() {
+  await cleanupOldTmpFiles();
+
+  const router = initializeRouter();
+  const server = createHttpServer(router);
+  const io = createSocketServer(server);
+
+  const socketGateway = SocketGateway.getInstance();
+  socketGateway.attachServer(io);
+
+  const uploadWorker = initializeUploadWorker();
+  registerShutdown(uploadWorker);
+
+  server.listen(ServerConfig.port, () => {
+    logger.info(`Server running on port ${ServerConfig.port}`);
+  });
+}
+
+bootstrap();

@@ -1,4 +1,5 @@
-type LogLevel = "debug" | "info" | "warn" | "error" | "success";
+import { stringify } from "@/core/utils";
+import type { LogLevel, LogMeta, LogPayload } from "./logger.d";
 
 const LEVELS: Record<LogLevel, number> = {
   debug: 10,
@@ -9,20 +10,6 @@ const LEVELS: Record<LogLevel, number> = {
 };
 
 const DEFAULT_LEVEL: LogLevel = "info";
-
-export type LogMeta =
-  | any
-  | {
-      [key: string]: unknown;
-    };
-
-interface LogPayload {
-  timestamp: string;
-  level: LogLevel;
-  context?: string;
-  message: string;
-  meta?: LogMeta;
-}
 
 export class Logger {
   private constructor(private readonly context?: string) {}
@@ -44,16 +31,19 @@ export class Logger {
       level,
       context: this.context,
       message,
-      ...(meta && { meta }),
+      meta,
     };
 
-    const icons: Record<string, string> = {
+    const icons: Record<LogLevel, string> = {
+      debug: "🐞",
+      info: "ℹ️",
+      warn: "🟡",
       error: "❌",
       success: "✅",
     };
 
     // console.table(payload);
-    console.log(icons[level] ?? "", JSON.stringify(payload));
+    console.log(icons[level] ?? "", stringify(payload));
   }
 
   debug(message: string, meta?: LogMeta) {

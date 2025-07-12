@@ -14,6 +14,9 @@ services:
       - minio-data:/data
 
   app:
+    restart: unless-stopped
+    build:
+      dockerfile: Dockerfile.dev
     depends_on:
       - minio
     environment:

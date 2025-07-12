@@ -17,9 +17,3 @@ export interface Req extends IncomingMessage {
 }
 
 export interface Res extends ServerResponse {}
-
-export interface HttpError {
-  message: unknown;
-  status: number;
-  type: "HttpError";
-}

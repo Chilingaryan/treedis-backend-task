@@ -1,0 +1,26 @@
+# FROM node:20
+
+# WORKDIR /app
+
+# COPY package*.json ./
+# RUN npm install --production
+
+# COPY . .
+# RUN npm run build
+
+# CMD ["node", "dist/main.js"]
+
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install deps BEFORE copying app code to leverage Docker layer caching
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+CMD ["node", "dist/main.js"]

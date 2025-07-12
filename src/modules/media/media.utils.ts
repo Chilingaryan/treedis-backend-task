@@ -1,8 +1,8 @@
-import { httpError } from "@/core/utils";
+import { HttpError } from "@/shared/errors/http-error";
 
 export const hasFile = (file?: string) => {
   if (!file) {
-    throw httpError("No file provided", 400);
+    throw new HttpError("No file provided", 400);
   }
 
   return true;

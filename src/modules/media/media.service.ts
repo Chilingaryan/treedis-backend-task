@@ -28,11 +28,10 @@ export class MediaService {
 
   async updateMedia(req: Req) {
     if (hasFile(req.query.file)) {
-      const { fileName, readStream, mimeType, contentLength } =
-        await processUpload(req, {
-          allowedMimeTypes: this.allowedMimeTypes,
-          customFileName: req.query.file,
-        });
+      const { fileName, mimeType, contentLength } = await processUpload(req, {
+        allowedMimeTypes: this.allowedMimeTypes,
+        customFileName: req.query.file,
+      });
 
       // Todo: make appropriate changes here
 
@@ -51,16 +50,10 @@ export class MediaService {
   }
 
   async uploadMedia(req: Req) {
-    const {
-      uploadId,
-      fileName,
-      readStream,
-      mimeType,
-      contentLength,
-      tmpFilePath,
-    } = await processUpload(req, {
-      allowedMimeTypes: this.allowedMimeTypes,
-    });
+    const { uploadId, fileName, mimeType, contentLength, tmpFilePath } =
+      await processUpload(req, {
+        allowedMimeTypes: this.allowedMimeTypes,
+      });
 
     await uploadQueue.add(
       "upload",
@@ -69,15 +62,14 @@ export class MediaService {
         tmpFilePath,
         fileName,
         contentLength,
-        readStream,
         mimeType,
       },
       {
         attempts: 5,
         backoff: {
-          // type: "exponential",
-          type: "fixed",
-          // delay: 2000,
+          type: "exponential",
+          // type: "fixed",
+          delay: 2000,
         },
       },
     );

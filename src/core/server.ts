@@ -6,6 +6,9 @@ import { Router } from "@/router";
 import { queryfy } from "./utils";
 import { SocketGateway } from "./socket-gateway";
 import { bullBoardApp } from "./queue-dashboard";
+import { Logger } from "@/shared/logger/logger";
+
+const logger = Logger.forContext("server");
 
 export const createHttpServer = (router: Router) => {
   const server = http.createServer((req, res) => {
@@ -38,7 +41,7 @@ export const createSocketServer = (server: http.Server) => {
     if (uploadId) socket.join(`uploadId:${uploadId}`);
 
     socket.on("disconnect", () => {
-      console.log(`User disconnected from socket ${socket.id}`);
+      logger.info(`User disconnected from socket ${socket.id}`);
     });
   });
 
