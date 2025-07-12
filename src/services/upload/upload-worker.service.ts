@@ -3,7 +3,7 @@ import { unlink } from "fs/promises";
 import { Worker, Job } from "bullmq";
 import IORedis from "ioredis";
 
-import { SocketGateway } from "@/core/socket-gateway";
+import { SocketGateway } from "@/core/server/socket-gateway";
 import { Logger } from "@/shared/logger/logger";
 import { IFileStorageService } from "@/services/storage/file-storage.interface";
 import { AppError } from "@/shared/errors/app-error";

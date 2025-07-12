@@ -2,11 +2,11 @@ import Stream from "stream";
 import { parse } from "url";
 import { IncomingMessage, ServerResponse } from "http";
 
-import { send } from "@/core/utils";
-import { Controller } from "@/core/controller";
+import { send } from "@/core/utils/utils";
+import { Controller } from "@/core/http/controller";
 import { Logger } from "@/shared/logger/logger";
 import { AppError } from "@/shared/errors/app-error";
-import { ControllerInstance, Route } from "@/core/types";
+import { ControllerInstance, Route } from "@/core/http/types";
 
 const logger = Logger.forContext("Router");
 

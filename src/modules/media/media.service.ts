@@ -1,4 +1,4 @@
-import { Req } from "@/core/types";
+import { Req } from "@/core/http/types";
 import { hasFile } from "@/modules/media/media.utils";
 import { uploadQueue } from "@/services/queue/queue.service";
 import { processUpload } from "@/modules/media/upload/process-upload";

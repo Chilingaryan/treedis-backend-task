@@ -1,82 +1,88 @@
-# Media Management API
+# Media Upload Service
 
-This project provides a minimal Node.js server (no Express) for uploading, retrieving, replacing, and deleting media files using AWS S3.
+Simple Node.js backend (without Express) for uploading files to S3 asynchronously via Redis queue.
 
 ---
 
-## ⚙️ Setup Instructions
+## 🚀 What’s Done
 
-Node.js version: `20.18.1` or higher (20.x.x)
+- Uploads go to a temp file and are queued to Redis
+- Worker picks up the job and streams to S3
+- WebSocket notifications for success/failure
+- AWS S3 support + MinIO for local dev
+- Real-time upload progress (uploadId-based room)
+- Admin queue UI via bull-board at `/admin/queues`
 
-1. **Install dependencies**
+---
 
-2. **Create `.env`**
+## ▶️ How to Run
 
-```env
-AWS_ACCESS_KEY_ID=aws_access_key
-AWS_SECRET_ACCESS_KEY=aws_secret_key
-AWS_REGION=aws_region
-AWS_S3_BUCKET=aws_bucket_name
-```
-
-3. **Start the server**
+First, copy one of the `.env` templates and set the correct AWS/MinIO credentials.
 
 ```bash
-npm start
+cp .env.local .env.dev   # for local dev
+cp .env.local .env.prod  # for prod
+```
+
+Then:
+
+### For Dev (with MinIO)
+
+```bash
+npm run docker:dev
+```
+
+### For Prod (with real S3)
+
+```bash
+npm run docker:prod
 ```
 
 ---
 
-## API Usage
+## 🧪 File Upload Flow
 
-### `POST /media`
+1. `POST /media` — Accepts form-data file upload
+2. Saves file to `/tmp/uploads`
+3. Enqueues to Redis (`upload` queue)
+4. Worker picks it up and streams to S3
+5. Emits `upload:success` or `upload:failed` over socket.io (`uploadId` room)
 
-Upload a file.
+---
 
-- Form-data key: `file`
-- Returns:
+## 🔧 Requirements
 
-```json
-{ "message": "Uploaded!", "fileName": "uuid.ext" }
+- Node.js `^20.18.1`
+- Docker + Docker Compose
+- AWS S3 credentials (or use MinIO for local)
+
+---
+
+## 📁 Environment Setup
+
+You’ll need `.env.dev` and `.env.prod`. Example:
+
+```env
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=eu-north-1
+AWS_S3_BUCKET=your-bucket-name
 ```
 
----
-
-### `GET /media?file=uuid.ext`
-
-Stream a file from S3.
+Add `MINIO_ENDPOINT=http://minio:9000` if using MinIO locally.
 
 ---
 
-### `PUT /media?file=uuid.ext`
+## 🤷‍♂️ What’s Missing / Could Be Better
 
-Replace a file with a new one.
-
-- Form-data key: `file`
-- Returns:
-
-```json
-{ "message": "Replaced!", "fileName": "uuid.ext" }
-```
+- I had no time for improving the router — not flexible
+- No global request timeout middleware
+- Folder structure still evolving (especially `core/` and `config/`)
 
 ---
 
-### `DELETE /media?file=uuid.ext`
+## 📎 Notes
 
-Deletes a file from S3.
-
----
-
-### `GET /media/metadata?file=uuid.ext`
-
-Returns metadata of a file (Content-Type, Size, etc.).
-
----
-
-## ✅ Features
-
-- UUID-based file naming
-- Streamed upload/download (handles large files)
-- Custom NestJS-like routing mechanism
-- Business logic isolation and future scalability
-- Simple logger
+- Admin queue UI: [http://localhost:8000/admin/queues](http://localhost:8000/admin/queues) (since the router is not perfect - I also don't have a guard on this api)
+- File responses streamed directly from S3
+- Logging is done via a custom `Logger` service

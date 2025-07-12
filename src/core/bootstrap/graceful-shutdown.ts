@@ -1,6 +1,6 @@
 import { Logger } from "@/shared/logger/logger";
 import { UploadWorkerService } from "@/services/upload/upload-worker.service";
-import { RedisService } from "@/config/redis.config";
+import { RedisService } from "@/services/redis/redis.service";
 
 const logger = Logger.forContext("Shutdown");
 

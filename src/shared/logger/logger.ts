@@ -1,4 +1,4 @@
-import { stringify } from "@/core/utils";
+import { stringify } from "@/core/utils/utils";
 import type { LogLevel, LogMeta, LogPayload } from "./logger.d";
 
 const LEVELS: Record<LogLevel, number> = {

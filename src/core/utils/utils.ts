@@ -1,7 +1,7 @@
 import qs from "qs";
 import { IncomingMessage, ServerResponse } from "http";
 
-import { Req } from "./types";
+import { Req } from "../http/types";
 
 export const stringify = (data: unknown): string => {
   if (typeof data === "object") {

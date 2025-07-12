@@ -9,11 +9,13 @@ import type {
   ProcessUploadData,
   ProcessUploadOptions,
 } from "./upload.interface";
-import { Req } from "@/core/types";
+import { Req } from "@/core/http/types";
 import { HttpError } from "@/shared/errors/http-error";
 import { Logger } from "@/shared/logger/logger";
 
 const logger = Logger.forContext("process-upload");
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024; // 10 GB
 
 export const processUpload = (
   req: Req,
@@ -21,7 +23,13 @@ export const processUpload = (
 ): Promise<ProcessUploadData> => {
   const { allowedMimeTypes = [] } = options || {};
 
-  const busboy = Busboy({ headers: req.headers });
+  const busboy = Busboy({
+    headers: req.headers,
+    limits: {
+      fileSize: MAX_FILE_SIZE,
+      files: 1,
+    },
+  });
 
   const uploadPromise = new Promise<ProcessUploadData>((resolve, reject) => {
     busboy.on("file", (name, fileStream, file) => {

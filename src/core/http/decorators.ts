@@ -1,4 +1,4 @@
-import { Method } from "@/core/types";
+import { Method } from "@/core/http/types";
 
 const addRoute = (
   method: string,

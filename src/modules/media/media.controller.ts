@@ -1,6 +1,6 @@
-import { Req } from "@/core/types";
-import { Controller } from "@/core/controller";
-import { Get, Post, Put, Delete } from "@/core/decorators";
+import { Req } from "@/core/http/types";
+import { Controller } from "@/core/http/controller";
+import { Get, Post, Put, Delete } from "@/core/http/decorators";
 
 import { MediaService } from "./media.service";
 

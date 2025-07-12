@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { RedisService } from "@/config/redis.config";
+import { RedisService } from "@/services/redis/redis.service";
 
 export const uploadQueue = new Queue("upload", {
   connection: RedisService.getInstance().getClient(),

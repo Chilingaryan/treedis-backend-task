@@ -1,5 +1,5 @@
-import { RedisService } from "@/config/redis.config";
-import { SocketGateway } from "@/core/socket-gateway";
+import { RedisService } from "@/services/redis/redis.service";
+import { SocketGateway } from "@/core/server/socket-gateway";
 import { S3Service } from "@/services/storage/s3-storage.service";
 import { UploadWorkerService } from "@/services/upload/upload-worker.service";
 
