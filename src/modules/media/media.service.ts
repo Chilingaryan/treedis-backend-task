@@ -1,6 +1,7 @@
-import { Req } from "@/core/types";
+import { Req } from "@/core/http/types";
 import { hasFile } from "@/modules/media/media.utils";
-import { processUpload } from "@/core/upload/process-upload";
+import { uploadQueue } from "@/services/queue/queue.service";
+import { processUpload } from "@/modules/media/upload/process-upload";
 import { IFileStorageService } from "@/services/storage/file-storage.interface";
 
 export class MediaService {
@@ -13,9 +14,9 @@ export class MediaService {
     "video/mp4",
   ];
 
-  async getMedia(file?: string) {
+  async getMedia(file: string) {
     if (hasFile(file)) {
-      return await this.fileStorageService.get(file!);
+      return await this.fileStorageService.get(file);
     }
   }
 
@@ -25,47 +26,70 @@ export class MediaService {
     }
   }
 
+  // Todo: the update has business logic bug - when you change .png to .mp4 it doesn't change the mimeType
   async updateMedia(req: Req) {
     if (hasFile(req.query.file)) {
-      const { fileName, readStream, mimeType, contentLength } =
+      const { uploadId, fileName, mimeType, contentLength, tmpFilePath } =
         await processUpload(req, {
           allowedMimeTypes: this.allowedMimeTypes,
           customFileName: req.query.file,
         });
 
-      await this.fileStorageService.upload(
-        fileName,
-        readStream,
-        mimeType,
-        contentLength
+      await uploadQueue.add(
+        "upload",
+        {
+          uploadId,
+          tmpFilePath,
+          fileName,
+          contentLength,
+          mimeType,
+        },
+        {
+          attempts: 5,
+          backoff: {
+            type: "exponential",
+            delay: 2000,
+          },
+        },
       );
 
       return {
-        message: "Replaced!",
+        message: "Queued",
         fileName,
+        uploadId,
       };
     }
   }
 
   async uploadMedia(req: Req) {
-    if (hasFile(req.query.file)) {
-      const { fileName, readStream, mimeType, contentLength } =
-        await processUpload(req, {
-          allowedMimeTypes: this.allowedMimeTypes,
-        });
+    const { uploadId, fileName, mimeType, contentLength, tmpFilePath } =
+      await processUpload(req, {
+        allowedMimeTypes: this.allowedMimeTypes,
+      });
 
-      await this.fileStorageService.upload(
+    await uploadQueue.add(
+      "upload",
+      {
+        uploadId,
+        tmpFilePath,
         fileName,
-        readStream,
+        contentLength,
         mimeType,
-        contentLength
-      );
+      },
+      {
+        attempts: 5,
+        backoff: {
+          type: "exponential",
+          delay: 2000,
+        },
+      },
+    );
 
-      return {
-        message: "Uploaded!",
-        fileName,
-      };
-    }
+    return {
+      message: "Queued",
+      fileName,
+      uploadId,
+    };
   }
 
   async deleteMedia(file?: string) {

@@ -3,9 +3,9 @@ import { Readable } from "stream";
 export interface IFileStorageService {
   upload(
     key: string,
-    body: Buffer | Readable,
+    body: Readable,
     contentType: string,
-    contentLength: number
+    contentLength: number,
   ): Promise<{ success: boolean }>;
 
   get(key: string): Promise<Readable>;
