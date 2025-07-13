@@ -18,7 +18,7 @@ const config = {
   ...(isProd
     ? {}
     : {
-        endpoint: process.env.MINIO_ENDPOINT ?? "http://minio:9000",
+        endpoint: process.env.MINIO_ENDPOINT,
       }),
 };
 

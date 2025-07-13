@@ -69,7 +69,31 @@ AWS_REGION=eu-north-1
 AWS_S3_BUCKET=your-bucket-name
 ```
 
-Add `MINIO_ENDPOINT=http://minio:9000` if using MinIO locally.
+---
+
+### 🧪 Local Testing & Debugging
+
+You can use the included `index.html` to test uploads directly in your browser. (this file is mostly GPT generated and there might be minor frontend bugs)
+
+To run locally, you'll need:
+
+- Docker + Docker Compose
+- A browser to open `index.html`
+
+Once running, you can:
+
+- Upload files and watch progress via WebSocket
+- Disconnect Redis, MinIO, or the server to simulate failures
+- Visit `http://localhost:8000/admin/queues` to monitor jobs
+- Visit `http://localhost:9001` to check minio (local S3 for testing purpose - credentials are `minioadmin`, don't forget about setting `AWS_S3_BUCKET`)
+
+The system:
+
+- Retries failed uploads (up to 5 times)
+- Emits success/failure via socket events
+- Cleans up temp files after failures or crashes
+
+Disk-based temp storage was chosen for local simplicity over S3 pre-buffering. It’s a test-task-grade design, built with clean architecture, not full production hardening.
 
 ---
 

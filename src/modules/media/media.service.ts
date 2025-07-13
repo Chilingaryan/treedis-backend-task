@@ -26,25 +26,37 @@ export class MediaService {
     }
   }
 
+  // Todo: the update has business logic bug - when you change .png to .mp4 it doesn't change the mimeType
   async updateMedia(req: Req) {
     if (hasFile(req.query.file)) {
-      const { fileName, mimeType, contentLength } = await processUpload(req, {
-        allowedMimeTypes: this.allowedMimeTypes,
-        customFileName: req.query.file,
-      });
+      const { uploadId, fileName, mimeType, contentLength, tmpFilePath } =
+        await processUpload(req, {
+          allowedMimeTypes: this.allowedMimeTypes,
+          customFileName: req.query.file,
+        });
 
-      // Todo: make appropriate changes here
-
-      // await this.fileStorageService.upload(
-      //   fileName,
-      //   readStream,
-      //   mimeType,
-      //   contentLength,
-      // );
+      await uploadQueue.add(
+        "upload",
+        {
+          uploadId,
+          tmpFilePath,
+          fileName,
+          contentLength,
+          mimeType,
+        },
+        {
+          attempts: 5,
+          backoff: {
+            type: "exponential",
+            delay: 2000,
+          },
+        },
+      );
 
       return {
-        message: "Replaced!",
+        message: "Queued",
         fileName,
+        uploadId,
       };
     }
   }
@@ -68,7 +80,6 @@ export class MediaService {
         attempts: 5,
         backoff: {
           type: "exponential",
-          // type: "fixed",
           delay: 2000,
         },
       },
